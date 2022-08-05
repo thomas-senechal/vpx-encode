@@ -30,9 +30,6 @@ jobs:
           - target: x86_64-apple-darwin
             os: macos-latest
             build_tool: cargo
-          - target: aarch64-apple-darwin
-            os: macos-latest
-            build_tool: cross
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout source code
