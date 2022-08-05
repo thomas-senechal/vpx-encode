@@ -1,2 +1,9 @@
 [target.aarch64-unknown-linux-gnu]
-pre-build = ["dpkg --add-architecture arm64", "apt-get update", "apt-get install -y libvpx-dev:arm64"]
+pre-build = [
+    "dpkg --add-architecture arm64",
+    "apt-get update",
+    "apt-get install -y libvpx-dev:arm64 libxcb-randr0-dev:arm64 libxv-dev:arm64 libvdpau-dev:arm64 libxcb-shm0-dev:arm64"
+]
+
+[target.aarch64-apple-darwin]
+pre-build = ["brew install libvpx"]
