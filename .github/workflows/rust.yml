@@ -20,7 +20,7 @@ jobs:
           $Env:VPX_VERSION = "1.8.2"
           $Env:VPX_LIB_DIR = "$HOME\unzipped\lib\x64"
           $Env:VPX_INCLUDE_DIR = "$HOME\unzipped\include"
-          cargo test
+          cargo test -p vpx-encode
 
   windows-2019-vpx1_9_0:
     runs-on: windows-2019
@@ -39,7 +39,7 @@ jobs:
           $Env:VPX_VERSION = "1.9.0"
           $Env:VPX_LIB_DIR = "$HOME\unzipped\lib\x64"
           $Env:VPX_INCLUDE_DIR = "$HOME\unzipped\include"
-          cargo test
+          cargo test -p vpx-encode
 
   windows-2019-vpx1_10_0:
     runs-on: windows-2019
@@ -58,7 +58,7 @@ jobs:
           $Env:VPX_VERSION = "1.10.0"
           $Env:VPX_LIB_DIR = "$HOME\unzipped\lib\x64"
           $Env:VPX_INCLUDE_DIR = "$HOME\unzipped\include"
-          cargo test
+          cargo test -p vpx-encode
 
   macos-10_15-vpx1_8_1:
     runs-on: macos-10.15
@@ -80,7 +80,7 @@ jobs:
           export VPX_LIB_DIR="/opt/libvpx/1.8.1/lib"
           export VPX_INCLUDE_DIR="/opt/libvpx/1.8.1/include"
           export PATH="$PATH:$HOME/.cargo/bin"
-          cargo test
+          cargo test -p vpx-encode
 
   ubuntu-20_04-vpx1_8:
     runs-on: ubuntu-20.04
@@ -92,7 +92,7 @@ jobs:
           sudo apt-get install -y libvpx-dev
       - name: Run test
         run: |
-          cargo test
+          cargo test -p vpx-encode
 
   ubuntu-20_04-vpx1_8-generate:
     runs-on: ubuntu-20.04
@@ -104,4 +104,4 @@ jobs:
           sudo apt-get install -y libvpx-dev
       - name: Run test
         run: |
-          cargo test --features env-libvpx-sys/generate
+          cargo test -p vpx-encode --features env-libvpx-sys/generate
