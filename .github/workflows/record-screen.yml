@@ -1,113 +1,88 @@
-name: Build and Run
+name: Release
 
-on: [push]
+on:
+  push:
+    tags:
+      - v[0-9]+.*
 
 jobs:
-  windows-2019-vpx1_8_2:
-    runs-on: windows-2019
+  create-release:
+    runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v1
-      - name: download and extract libvpx
-        run: |
-          curl -sSfL -O https://github.com/ShiftMediaProject/libvpx/releases/download/v1.8.2/libvpx_v1.8.2_msvc16.zip
-          unzip libvpx_v1.8.2_msvc16.zip -d $HOME\unzipped
-          dir
-          dir $HOME\unzipped
-          dir $HOME\unzipped\lib\x64
-      - name: Run test
-        run: |
-          cd record-screen
-          $Env:VPX_STATIC = "1"
-          $Env:VPX_VERSION = "1.8.2"
-          $Env:VPX_LIB_DIR = "$HOME\unzipped\lib\x64"
-          $Env:VPX_INCLUDE_DIR = "$HOME\unzipped\include"
-          cargo build
+      - uses: actions/checkout@v3
+      - uses: taiki-e/create-gh-release-action@v1
+        with:
+          # (optional)
+          changelog: CHANGELOG.md
+        env:
+          # (required)
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  windows-2019-vpx1_9_0:
-    runs-on: windows-2019
+  upload-assets:
+    strategy:
+      matrix:
+        include:
+          - target: aarch64-unknown-linux-gnu
+            os: ubuntu-latest
+            build_tool: cross
+          - target: x86_64-unknown-linux-gnu
+            os: ubuntu-latest
+            build_tool: cargo
+          - target: aarch64-apple-darwin
+            os: macos-latest
+            build_tool: cargo
+    runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v1
-      - name: download and extract libvpx
-        run: |
-          curl -sSfL -O  https://github.com/ShiftMediaProject/libvpx/releases/download/v1.9.0/libvpx_v1.9.0_msvc16.zip
-          unzip libvpx_v1.9.0_msvc16.zip -d $HOME\unzipped
-          dir
-          dir $HOME\unzipped
-          dir $HOME\unzipped\lib\x64
-      - name: Run test
-        run: |
-          cd record-screen
-          $Env:VPX_STATIC = "1"
-          $Env:VPX_VERSION = "1.9.0"
-          $Env:VPX_LIB_DIR = "$HOME\unzipped\lib\x64"
-          $Env:VPX_INCLUDE_DIR = "$HOME\unzipped\include"
-          cargo build
+      - name: Checkout source code
+        uses: actions/checkout@v3
 
-  windows-2019-vpx1_10_0:
-    runs-on: windows-2019
-    steps:
-      - uses: actions/checkout@v1
-      - name: download and extract libvpx
-        run: |
-          curl -sSfL -O  https://github.com/ShiftMediaProject/libvpx/releases/download/v1.10.0/libvpx_v1.10.0_msvc16.zip
-          unzip libvpx_v1.10.0_msvc16.zip -d $HOME\unzipped
-          dir
-          dir $HOME\unzipped
-          dir $HOME\unzipped\lib\x64
-      - name: Run test
-        run: |
-          cd record-screen
-          $Env:VPX_STATIC = "1"
-          $Env:VPX_VERSION = "1.10.0"
-          $Env:VPX_LIB_DIR = "$HOME\unzipped\lib\x64"
-          $Env:VPX_INCLUDE_DIR = "$HOME\unzipped\include"
-          cargo build
+      - name: Install Rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          target: ${{ matrix.job.target }}
+          override: true
 
-  macos-10_15-vpx1_8_1:
-    runs-on: macos-10.15
-    steps:
-      - uses: actions/checkout@v1
-      - name: download and extract libvpx
+      - name: Install prerequisites for MacOS
         run: |
-          cd /tmp
-          curl --silent -O -L https://strawlab-cdn.com/assets/libvpx-1.8.1.sierra.bottle.tar.gz
-          sudo mkdir -p /opt
-          sudo tar xvzf /tmp/libvpx-1.8.1.sierra.bottle.tar.gz -C /opt
-      - name: install rustup
-        run: |
-          curl -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal
-      - name: Run test
-        run: |
-          cd record-screen
-          export VPX_STATIC=1
-          export VPX_VERSION="1.8.1"
-          export VPX_LIB_DIR="/opt/libvpx/1.8.1/lib"
-          export VPX_INCLUDE_DIR="/opt/libvpx/1.8.1/include"
-          export PATH="$PATH:$HOME/.cargo/bin"
-          cargo build
+          brew install libvpx 
+        if: startsWith(matrix.job.os, 'macos-')
 
-  ubuntu-20_04-vpx1_8:
-    runs-on: ubuntu-20.04
-    steps:
-      - uses: actions/checkout@v1
-      - name: download and extract libvpx
+      - name: Install prerequisites for Ubuntu
         run: |
           sudo apt-get update -y
-          sudo apt-get install -y libvpx-dev libxcb-randr0-dev
-      - name: Run test
-        run: |
-          cd record-screen
-          cargo build
+          sudo apt-get install -y libvpx-dev
+        if: startsWith(matrix.job.os, 'ubuntu-')
 
-  ubuntu-20_04-vpx1_8-generate:
-    runs-on: ubuntu-20.04
-    steps:
-      - uses: actions/checkout@v1
-      - name: download and extract libvpx
+      - name: Install prerequisites for Windows
         run: |
-          sudo apt-get update -y
-          sudo apt-get install -y libvpx-dev libxcb-randr0-dev
-      - name: Run test
+          curl -sSfL -O  https://github.com/ShiftMediaProject/libvpx/releases/download/v1.12.0/libvpx_v1.12.0_msvc16.zip
+          unzip libvpx_v1.12.0_msvc16.zip -d $HOME\unzipped
+          Add-Content -Path $env:GITHUB_ENV -Value "VPX_STATIC=1"
+          Add-Content -Path $env:GITHUB_ENV -Value "VPX_VERSION=1.12.0"
+          Add-Content -Path $env:GITHUB_ENV -Value "VPX_LIB_DIR=$HOME\unzipped\lib\x64"
+          Add-Content -Path $env:GITHUB_ENV -Value "VPX_INCLUDE_DIR=$HOME\unzipped\include"
+        if: startsWith(matrix.job.os, 'windows-')
+
+      # Using latest cross instead of the old in crate.io
+      - name: Install cross
         run: |
-          cd record-screen
-          cargo build --features env-libvpx-sys/generate
+          cargo install cross --git https://github.com/cross-rs/cross
+
+      - name: Clean
+        uses: actions-rs/cargo@v1
+        with:
+          command: clean
+
+      - uses: taiki-e/upload-rust-binary-action@v1
+        with:
+          # (required)
+          bin: record-screen
+          # (optional) Target triple, default is host triple.
+          target: ${{ matrix.target }}
+          # (optional) Tool to build binaries (cargo, or cross)
+          build_tool: ${{ matrix.build_tool }}
+        env:
+          # (required) GitHub token for uploading assets to GitHub Releases.
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
