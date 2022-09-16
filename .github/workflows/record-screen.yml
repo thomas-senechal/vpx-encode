@@ -46,10 +46,15 @@ jobs:
           target: ${{ matrix.target }}
           override: true
 
-      - name: Install prerequisites for MacOS
+      - name: Install libvpx for MacOS
         run: |
-          brew install libvpx 
+          brew install libvpx
         if: startsWith(matrix.os, 'macos-')
+
+      - name: Install docker for MacOS ARM64
+        run: |
+          brew install docker
+        if: startsWith(matrix.target, 'aarch64-apple-darwin')
 
       - name: Install prerequisites for Ubuntu
         run: |
