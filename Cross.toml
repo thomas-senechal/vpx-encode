@@ -7,4 +7,4 @@ pre-build = [
 
 [target.aarch64-apple-darwin]
 image = "ghcr.io/cross-rs/aarch64-apple-darwin"
-pre-build = ["brew install libvpx"]
+pre-build = ["brew install --bottle-tag arm64_monterey libvpx"]
