@@ -12,14 +12,19 @@ jobs:
         include:
           - target: x86_64-pc-windows-msvc
             os: windows-latest
+            arch: amd64
           - target: aarch64-unknown-linux-gnu
             os: ubuntu-latest
+            arch: arm64
           - target: x86_64-unknown-linux-gnu
             os: ubuntu-latest
+            arch: amd64
           - target: x86_64-apple-darwin
             os: macos-latest
+            arch: amd64
           - target: aarch64-apple-darwin
             os: macos-latest
+            arch: arm64
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout source code
@@ -56,7 +61,15 @@ jobs:
 
       - name: Build
         uses: actions-rs/cargo@v1
+        if: matrix.arch != 'arm64'
         with:
-          use-cross: startswith(matrix.target, 'aarch64-')
+          command: build
+          args: --release
+
+      - name: Build
+        uses: actions-rs/cargo@v1
+        if: matrix.arch == 'arm64'
+        with:
+          use-cross: true
           command: build
           args: --release --target ${{ matrix.target }}
